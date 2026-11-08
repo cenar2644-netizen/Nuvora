@@ -54,9 +54,15 @@ const PlaceOrder = () => {
         amount: getCartAmount() + delivery_fee
       };
 
+
       switch (method) {
-        case 'cod':
-          const response = await axios.post(`${backendUrl}/api/order/place`, orderData, { headers: { token } });
+        case 'cod': {
+          const response = await axios.post(
+            `${backendUrl}/api/order/place`,
+            orderData,
+            { headers: { token } }
+          );
+
           if (response.data.success) {
             setCartItems({});
             navigate('/orders');
@@ -64,14 +70,36 @@ const PlaceOrder = () => {
             toast.error(response.data.message);
           }
           break;
-        default:
+        }
+
+        case 'stripe': {
+          const response = await axios.post(
+            `${backendUrl}/api/order/stripe`,
+            orderData,
+            { headers: { token } }
+          );
+
+          if (response.data.success && response.data.session_url) {
+            window.location.href = response.data.session_url;
+          } else {
+            toast.error(response.data.message || 'Could not start Stripe checkout.');
+          }
           break;
+        }
+
+        case 'razorpay':
+          toast.info('Razorpay payment is not configured yet.');
+          break;
+
+        default:
+          toast.error('Please select a payment method.');
       }
+
     } catch (error) {
       console.error(error);
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
-  };
+  };    
 
   return (
     <form onSubmit={onSubmitHandler} className='flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t'>
