@@ -1,26 +1,34 @@
 import axios from 'axios'
 import React from 'react'
-import { backendUrl, currency } from '../App'
+import { backendUrl, currency } from '../config';
 import { toast } from 'react-toastify'
 import { useState, useEffect } from 'react'
 
 const List = () => {
   const [list, setList] = useState([])
-  const fetchList = async()=>{
-    try{
-      const response = await axios.get(backendUrl + '/api/product/list')
-      if(response.data.success){
-        setList(response.data.products)
-      }
-      else{
-        toast.error(response.data.message)
-      }
+  const fetchList = async () => {
+  try {
+    const response = await axios.get(
+      backendUrl + '/api/product/list'
+    );
+
+    console.log('API Response:', response.data);
+
+    if (response.data.success) {
+      setList(
+        Array.isArray(response.data.products)
+          ? response.data.products
+          : []
+      );
+    } else {
+      toast.error(response.data.message);
+      setList([]);
     }
-    catch (error){
-      console.error(error)
-      toast.error(error.message)
-    }
+  } catch (error) {
+    console.error('Fetch List Error:', error);
+    toast.error(error.response?.data?.message || error.message);
   }
+};
 
   useEffect(()=>{
     fetchList()
@@ -73,7 +81,7 @@ const List = () => {
 
         {/* Product List */}
         {
-          list.map((item, index) => (
+          Array.isArray(list) && list.map((item, index) => (
             <div className='grid grid-cols-[1fr_3fr_1fr] md:grid-cols-[1fr_3fr_1fr_1fr_1fr] items-center gap-2 py-1 px-2 border text-sm' key={index}>
               <img className='w-12' src={item.images?.[0] || 'default-image-url'} alt={item.name} />
               <p>{item.name}</p>
